@@ -1,29 +1,33 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from .serializers import AnalyzeRequestSerializer
+
 
 class AnalyzeView(APIView):
     def post(self, request):
-        notes_text = request.data.get("notes_text", "")
+        s = AnalyzeRequestSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        notes_text = s.validated_data["notes_text"]
 
-        #dummy response (Phase A): stable schema for frontend
+        # dummy response (Phase A): stable schema for frontend
         dummy = {
             "priorities": [
                 {
                     "title": "Stabilize API response schema",
                     "reason": "Frontend depends on consistent keys to render results.",
-                    "urgency": "High"
+                    "urgency": "high",
                 }
             ],
             "tasks": [
                 {
                     "title": "Implement POST /api/analyze/ returning stable JSON",
-                    "owner": "Owner",
+                    "owner": "unassigned",
                     "due": None,
-                    "status": "pending",
+                    "status": "doing",
                     "confidence": 0.9,
                 },
-                 {
+                {
                     "title": "Build results dashboard UI",
                     "owner": "Shokh",
                     "due": None,
@@ -31,7 +35,7 @@ class AnalyzeView(APIView):
                     "confidence": 0.8,
                 },
             ],
-             "blockers": [
+            "blockers": [
                 {
                     "title": "Nova integration not implemented yet",
                     "impacts": ["Task extraction", "Weekly report generation"],
