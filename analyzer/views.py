@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import AnalyzeRequestSerializer
 
-from .services.nova_client import NovaClient
 from .services.extractor import extract_ops
+from .services.nova_client import NovaClient
+
 
 
 class AnalyzeView(APIView):

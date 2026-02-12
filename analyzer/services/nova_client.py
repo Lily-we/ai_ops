@@ -27,7 +27,7 @@ class NovaClient:
         #   us.amazon.nova-2-lite-v1:0
         #   global.amazon.nova-2-lite-v1:0
         # (docs list both) :contentReference[oaicite:2]{index=2}
-        self.model_id = model_id or os.getenv("NOVA_MODEL_ID", "us.amazon.nova-2-lite-v1:0")
+        self.model_id = model_id or os.getenv("NOVA_MODEL_ID", "amazon.nova-2-lite-v1:0")
 
         cfg = Config(
             connect_timeout=5,
@@ -37,31 +37,19 @@ class NovaClient:
         self.client = boto3.client("bedrock-runtime", region_name=self.region, config=cfg)
 
     def invoke_text(self, system_prompt: str, user_prompt: str, max_tokens: int = 900, temperature: float = 0.2) -> str:
-        """
-        Returns the model's text output (first text block).
-        Nova Invoke API uses a message list payload. :contentReference[oaicite:3]{index=3}
-        """
-        request_body = {
-            "system": [{"text": system_prompt}],
-            "messages": [
-                {"role": "user", "content": [{"text": user_prompt}]},
-            ],
-            "inferenceConfig": {
-                "maxTokens": max_tokens,
-                "temperature": temperature,
-            },
-        }
-
         try:
-            resp = self.client.invoke_model(
+            resp = self.client.converse(
                 modelId=self.model_id,
-                body=json.dumps(request_body),
-            )
-            body = json.loads(resp["body"].read())
-            content_list = body["output"]["message"]["content"]
+                system=[{"text": system_prompt}],
+                messages=[{"role": "user", "content": [{"text": user_prompt}]}],
+                inferenceConfig={"maxTokens": max_tokens, "temperature": temperature},
+        )
+
+            content_list = resp["output"]["message"]["content"]
             text_block = next((item for item in content_list if "text" in item), None)
             if not text_block:
-                raise NovaClientError("Nova returned no text block.")
+                 raise NovaClientError("Nova returned no text block.")
             return text_block["text"]
+
         except (ClientError, BotoCoreError, KeyError, ValueError) as e:
             raise NovaClientError(str(e)) from e
